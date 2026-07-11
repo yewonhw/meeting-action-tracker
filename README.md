@@ -7,11 +7,11 @@
 ### 된 것
 - Frontend(Next.js) / Backend(FastAPI) monorepo 뼈대
 - Backend `GET /api/health` 헬스체크
-- 로컬 PostgreSQL용 `docker-compose.yml`
+- SQLite 사용 (별도 DB 서버/Docker 불필요)
+- 관계형 데이터 모델: Meeting 1:N ActionItem
 - 환경변수 예시 (`.env.example`)
 
 ### 아직 안 된 것
-- 관계형 데이터 모델 (Meeting 1:N ActionItem)
 - AI 구조화 (OpenRouter)
 - CRUD / 비동기 AI 처리
 - 실제 화면 플로우
@@ -23,13 +23,34 @@
 Browser → Next.js (frontend)
                 │ HTTP
                 ▼
-         FastAPI (backend) → PostgreSQL
+         FastAPI (backend) → SQLite (파일 DB)
                 │
                 ▼
            OpenRouter (LLM)
 ```
 
 배포 시 EC2 + nginx로 `/` → Next, `/api` → FastAPI 연결 예정.
+SQLite 파일은 EC2 디스크(또는 EBS)에 두고 FastAPI가 직접 읽는다.
+
+## 데이터 모델
+
+```
+meetings                         action_items
+─────────                        ────────────
+id (PK)                          id (PK)
+title                            meeting_id (FK → meetings.id)
+raw_text                         task
+decisions (nullable)             assignee (nullable)  ← 원문에 없으면 null
+discussions (nullable)           due_date (nullable) ← 원문에 없으면 null
+ai_status                        status (todo|done)
+ai_error                         created_at / updated_at
+created_at / updated_at
+
+Meeting 1 ──────── < ActionItem N
+```
+
+- 회의 삭제 시 소속 액션아이템도 함께 삭제 (ORM cascade + FK ON DELETE CASCADE)
+- AI 결과 필드는 스키마만 준비. 호출·검증은 이후 커밋
 
 ## 스택 선택 이유
 
@@ -37,19 +58,15 @@ Browser → Next.js (frontend)
 |------|------|------|
 | Frontend | Next.js (App Router) | React 기반 UI·라우팅을 빠르게 구성하고, AWS에서 standalone 배포가 가능 |
 | Backend | FastAPI | REST API + 비동기 LLM 호출·JSON 스키마 검증에 적합 |
-| DB | PostgreSQL | Meeting 1:N ActionItem 관계 모델링, 이후 RDS 이관이 수월 |
+| DB | SQLite | 관계형(Meeting 1:N ActionItem)을 유지하면서, 로컬·EC2 모두 설치 부담 없이 빠르게 굴리기 위함 |
 | LLM | OpenRouter 무료 티어 | 과제 요건. 모델은 `.env`로 교체 가능 |
 | 배포 | AWS (EC2 예정) | 과제 필수. 로컬 완주 후 배포 |
 
 ## 로컬 실행
 
-### 1) DB
+### 1) Backend (SQLite는 별도 기동 불필요)
 
-```bash
-docker compose up -d
-```
-
-### 2) Backend
+DB 파일은 첫 연결 시 `backend/data/meeting_action_tracker.db`에 생성될 예정입니다.
 
 ```bash
 cd backend
@@ -61,11 +78,11 @@ uvicorn app.main:app --reload --port 8000
 
 헬스체크: http://localhost:8000/api/health
 
-### 3) Frontend
+### 2) Frontend
 
 ```bash
 cd frontend
-cp ../.env.example .env.local   # 필요 시 NEXT_PUBLIC_API_URL만 남기고 수정
+# NEXT_PUBLIC_API_URL=http://localhost:8000 만 .env.local에 넣으면 됨
 npm run dev
 ```
 
@@ -73,7 +90,7 @@ npm run dev
 
 ## 앞으로의 커밋 계획
 
-1. DB 모델 + 마이그레이션 (Meeting 1:N ActionItem)
+1. ~~DB 모델 (Meeting 1:N ActionItem, SQLite)~~
 2. Meeting / ActionItem CRUD API
 3. OpenRouter 구조화 + JSON 강제·검증
 4. AI 비동기 상태 처리 (loading / fail / timeout)

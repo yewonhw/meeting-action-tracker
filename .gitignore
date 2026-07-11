@@ -153,6 +153,15 @@ venv/
 .mypy_cache/
 .ruff_cache/
 
+# SQLite (런타임에 생성되는 DB 파일 — 커밋하지 않음)
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+# data 폴더는 유지하되 DB 파일만 무시 (.gitkeep은 추적)
+backend/data/*
+!backend/data/.gitkeep
+
 # OS / IDE
 .DS_Store
 .idea/

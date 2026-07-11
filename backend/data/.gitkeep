@@ -1,0 +1,3 @@
+# SQLite DB 파일이 저장되는 디렉터리.
+# meeting_action_tracker.db 는 런타임에 생성되며 .gitignore 대상이다.
+# 이 폴더 자체는 구조를 고정하기 위해 비워 둔다.

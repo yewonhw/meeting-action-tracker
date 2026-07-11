@@ -1,3 +1,9 @@
+/**
+ * 홈 페이지 (/).
+ * 지금은 scaffold용 안내만 보여준다.
+ * 이후 커밋에서 회의 목록·입력 화면으로 확장한다.
+ */
+
 import styles from "./page.module.css";
 
 export default function Home() {
