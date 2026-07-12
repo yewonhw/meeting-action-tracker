@@ -24,21 +24,39 @@ class AiActionItem(BaseModel):
     @field_validator("assignee", mode="before")
     @classmethod
     def empty_assignee_to_none(cls, value: object) -> object:
-        # 모델이 "" 또는 공백만 보내면 None으로 바꾼다.
+        # 모델이 "" / 공백 / 글자 "null" 을 보내면 None 으로 통일한다.
         if value is None:
             return None
-        if isinstance(value, str) and not value.strip():
-            return None
+        if isinstance(value, str):
+            stripped = value.strip()
+            if not stripped or stripped.lower() in {"null", "none", "undefined"}:
+                return None
         return value
 
     @field_validator("due_date", mode="before")
     @classmethod
     def empty_due_date_to_none(cls, value: object) -> object:
-        # 기한도 빈 문자열이면 None으로 통일한다.
+        """
+        기한 정리:
+        - null / 빈 글자 / 글자 "null" → None
+        - YYYY-MM-DD 이면 그대로 통과
+        - "금요일"처럼 날짜가 아니면 None
+          (무료 모델이 상대 표현을 줄 때가 있어, 전체 구조화를 망치지 않게 함)
+        """
         if value is None:
             return None
-        if isinstance(value, str) and not value.strip():
-            return None
+        if isinstance(value, date):
+            return value
+        if isinstance(value, str):
+            stripped = value.strip()
+            if not stripped or stripped.lower() in {"null", "none", "undefined"}:
+                return None
+            try:
+                # fromisoformat 이 성공하면 유효한 날짜 글자
+                date.fromisoformat(stripped)
+                return stripped
+            except ValueError:
+                return None
         return value
 
 

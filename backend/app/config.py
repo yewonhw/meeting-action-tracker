@@ -37,3 +37,6 @@ OPENROUTER_MODEL = os.getenv(
     "OPENROUTER_MODEL",
     "google/gemma-4-26b-a4b-it:free",
 )
+# AI 호출이 이 시간(초)을 넘으면 타임아웃 → ai_status=failed
+# 백그라운드 작업이 너무 오래 붙잡지 않게 상한을 둔다.
+OPENROUTER_TIMEOUT_SECONDS = float(os.getenv("OPENROUTER_TIMEOUT_SECONDS", "90"))

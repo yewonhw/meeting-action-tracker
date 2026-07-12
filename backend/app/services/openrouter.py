@@ -14,7 +14,7 @@ from typing import Any
 
 import httpx
 
-from app.config import OPENROUTER_API_KEY, OPENROUTER_MODEL
+from app.config import OPENROUTER_API_KEY, OPENROUTER_MODEL, OPENROUTER_TIMEOUT_SECONDS
 
 # OpenRouter Chat Completions API의 고정 URL
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
@@ -120,12 +120,16 @@ async def complete_meeting_structure(raw_text: str, *, title: str | None = None)
     }
 
     try:
-        # 비동기 HTTP 클라이언트로 POST 요청을 보낸다. 제한 시간은 90초다.
-        async with httpx.AsyncClient(timeout=90.0) as client:
+        # 비동기 HTTP 클라이언트로 POST.
+        # timeout 은 .env 의 OPENROUTER_TIMEOUT_SECONDS (기본 90초).
+        # 이 시간을 넘기면 httpx.TimeoutException → 아래 except 에서 OpenRouterError.
+        async with httpx.AsyncClient(timeout=OPENROUTER_TIMEOUT_SECONDS) as client:
             response = await client.post(OPENROUTER_URL, headers=headers, json=body)
     except httpx.TimeoutException as exc:
         # 제한 시간 안에 응답이 없으면 타임아웃 오류로 바꾼다.
-        raise OpenRouterError("OpenRouter request timed out") from exc
+        raise OpenRouterError(
+            f"OpenRouter request timed out after {OPENROUTER_TIMEOUT_SECONDS}s"
+        ) from exc
     except httpx.HTTPError as exc:
         # 그 밖의 HTTP 전송 오류를 OpenRouterError로 통일한다.
         raise OpenRouterError(f"OpenRouter request failed: {exc}") from exc
