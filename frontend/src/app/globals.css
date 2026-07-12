@@ -1,14 +1,25 @@
+/* 사이트 전체에 적용되는 전역 스타일 (layout.tsx 에서 import) */
+
+/* :root = HTML 문서의 최상위. 여기 적은 값은 전역 기본처럼 쓰임 */
 :root {
+  /* 브라우저 UI(스크롤바 등)를 라이트 테마로 맞춤 */
   color-scheme: light;
 }
 
+/* * = 모든 요소에 적용 */
 * {
+  /*
+    box-sizing: border-box
+    = width/height 계산에 padding, border 를 포함
+    (안 쓰면 padding 넣을수록 박스가 커져서 레이아웃이 깨지기 쉬움)
+  */
   box-sizing: border-box;
 }
 
+/* html 과 body 를 같은 규칙으로 */
 html,
 body {
-  margin: 0;
-  padding: 0;
-  background: #f7f7f5;
+  margin: 0; /* 바깥 여백 제거 (브라우저 기본 margin 없애기) */
+  padding: 0; /* 안쪽 여백 제거 */
+  background: #f7f7f5; /* 페이지 배경색 */
 }

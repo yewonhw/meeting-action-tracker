@@ -29,10 +29,13 @@ async def lifespan(_app: FastAPI):
     앱 시작 시 한 번: 테이블이 없으면 생성.
     CRUD API가 없어도 모델이 DB에 반영됐는지 로컬에서 바로 확인 가능하다.
     """
+    # 서버가 요청을 받기 전에 테이블을 준비한다.
     init_db()
+    # yield 이후는 앱이 종료될 때 실행할 정리 코드 자리 (현재는 없음).
     yield
 
 
+# FastAPI 앱 인스턴스. title·description·version은 /docs OpenAPI 문서에 표시된다.
 app = FastAPI(
     title="Meeting Action Tracker API",
     description="REST API for meeting notes and action items",
@@ -50,6 +53,7 @@ app.add_middleware(
         "http://127.0.0.1:3000",
     ],
     allow_credentials=True,
+    # 개발 편의를 위해 메서드·헤더는 모두 허용한다.
     allow_methods=["*"],
     allow_headers=["*"],
 )

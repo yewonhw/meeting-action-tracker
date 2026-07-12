@@ -15,4 +15,5 @@ router = APIRouter(tags=["health"])
 @router.get("/health")
 def health_check() -> dict[str, str]:
     """Liveness check for local/dev and load balancers."""
+    # DB·AI 호출 없이 고정 응답만 돌려 서버 기동 여부를 확인한다.
     return {"status": "ok"}

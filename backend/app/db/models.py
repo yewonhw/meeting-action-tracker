@@ -34,32 +34,42 @@ class Meeting(Base):
     action_items: 이 회의에 속한 액션아이템 목록 (1:N)
     """
 
+    # 실제 DB 테이블 이름
     __tablename__ = "meetings"
 
+    # 기본 키. 새 행마다 자동으로 1씩 증가한다.
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
 
+    # 회의 제목 (최대 200자). 비어 있으면 안 된다.
     title: Mapped[str] = mapped_column(String(200), nullable=False)
+    # 회의록 원문 전체. Text로 긴 문자열을 담는다.
     raw_text: Mapped[str] = mapped_column(Text, nullable=False)
 
     # AI 결과 — 원문에 근거한 내용만 저장. 형식은 이후 서비스에서 JSON으로 강제.
+    # 결정사항 JSON 문자열. 구조화 전에는 null일 수 있다.
     decisions: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    # 논의사항 JSON 문자열. 구조화 전에는 null일 수 있다.
     discussions: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     # pending → processing → done | failed
     # CRUD/AI 커밋에서 로딩·타임아웃·실패 UI와 맞춘다.
+    # default: Python에서 새 객체 만들 때, server_default: DB INSERT 시 기본값
     ai_status: Mapped[str] = mapped_column(
         String(32),
         nullable=False,
         default="pending",
         server_default="pending",
     )
+    # 구조화 실패 시 오류 메시지. 성공 시에는 null이다.
     ai_error: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
+    # 생성 시각. DB가 INSERT 시점에 채운다.
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
         nullable=False,
     )
+    # 수정 시각. INSERT 시 기본값, UPDATE 시 onupdate로 갱신된다.
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
@@ -70,6 +80,7 @@ class Meeting(Base):
     # cascade: 회의 삭제 시 소속 액션아이템도 함께 삭제
     # passive_deletes와 DB ON DELETE CASCADE를 쓰면 더 명시적이지만,
     # SQLite + ORM cascade로 우선 단순하게 유지한다.
+    # back_populates: ActionItem.meeting과 양방향 연결을 맞춘다.
     action_items: Mapped[list[ActionItem]] = relationship(
         back_populates="meeting",
         cascade="all, delete-orphan",
@@ -91,6 +102,8 @@ class ActionItem(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
 
     # FK: 어떤 회의의 액션인지. 관계의 핵심 컬럼.
+    # ondelete="CASCADE": 부모 회의가 삭제되면 DB에서도 이 행을 함께 삭제한다.
+    # index=True: meeting_id로 자주 조회하므로 인덱스를 둔다.
     meeting_id: Mapped[int] = mapped_column(
         Integer,
         ForeignKey("meetings.id", ondelete="CASCADE"),
@@ -98,10 +111,14 @@ class ActionItem(Base):
         index=True,
     )
 
+    # 할 일 본문
     task: Mapped[str] = mapped_column(String(500), nullable=False)
+    # 담당자. 없으면 null
     assignee: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    # 기한(날짜만). 없으면 null
     due_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
 
+    # 완료 여부. 기본값은 todo
     status: Mapped[str] = mapped_column(
         String(32),
         nullable=False,
@@ -121,4 +138,5 @@ class ActionItem(Base):
         nullable=False,
     )
 
+    # 부모 Meeting으로 역참조. Meeting.action_items와 짝을 이룬다.
     meeting: Mapped[Meeting] = relationship(back_populates="action_items")
