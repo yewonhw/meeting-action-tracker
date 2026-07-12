@@ -1,5 +1,5 @@
 """
-Meeting CRUD.
+Meeting CRUD + AI 구조화 트리거.
 
 경로 (main에서 /api prefix):
   POST   /meetings
@@ -8,6 +8,7 @@ Meeting CRUD.
   PATCH  /meetings/{meeting_id}
   DELETE /meetings/{meeting_id}
   POST   /meetings/{meeting_id}/action-items
+  POST   /meetings/{meeting_id}/structure
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -23,6 +24,8 @@ from app.schemas.meeting import (
     MeetingRead,
     MeetingUpdate,
 )
+from app.services.openrouter import OpenRouterError
+from app.services.structure import StructureError, structure_meeting
 
 router = APIRouter(tags=["meetings"])
 
@@ -105,3 +108,39 @@ def create_action_item(
     db.commit()
     db.refresh(item)
     return item
+
+
+@router.post(
+    "/meetings/{meeting_id}/structure",
+    response_model=MeetingRead,
+)
+async def structure_meeting_endpoint(
+    meeting_id: int,
+    db: Session = Depends(get_db),
+) -> Meeting:
+    """
+    회의록 원문을 OpenRouter로 구조화한다.
+    성공 시 decisions/discussions/action_items 저장, ai_status=done.
+    실패 시 ai_status=failed, ai_error에 사유 저장 후 에러 응답.
+    """
+    meeting = _get_meeting_or_404(db, meeting_id)
+    if meeting.ai_status == "processing":
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Meeting is already being structured",
+        )
+
+    try:
+        await structure_meeting(db, meeting)
+    except OpenRouterError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=str(exc),
+        ) from exc
+    except StructureError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(exc),
+        ) from exc
+
+    return _get_meeting_or_404(db, meeting_id)

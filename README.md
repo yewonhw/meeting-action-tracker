@@ -10,11 +10,11 @@
 - SQLite 사용 (별도 DB 서버/Docker 불필요)
 - 관계형 데이터 모델: Meeting 1:N ActionItem
 - Meeting / ActionItem CRUD API
+- OpenRouter 회의록 구조화 (`POST /api/meetings/{id}/structure`) + JSON 검증
 - 환경변수 예시 (`.env.example`)
 
 ### 아직 안 된 것
-- AI 구조화 (OpenRouter)
-- 비동기 AI 처리 (loading / fail / timeout)
+- 비동기 AI 처리 (loading / fail / timeout을 백그라운드로)
 - 실제 화면 플로우
 - AWS 배포
 
