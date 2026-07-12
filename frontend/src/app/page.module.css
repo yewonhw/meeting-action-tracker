@@ -1,39 +1,75 @@
 /*
-  홈 페이지 전용 스타일 (CSS Modules)
-  page.tsx 에서: import styles from "./page.module.css"
-  → styles.main, styles.title 처럼 객체로 사용
-
-  .module.css 를 쓰는 이유:
-  - 클래스 이름이 빌드 때 고유해져서
-    다른 페이지의 .title 과 안 섞임
+  page.module.css — 홈(/) 화면 전용 스타일
+  HomeClient.tsx 에서 styles.xxx 로만 사용한다.
+  (다른 페이지 CSS 클래스 이름과 겹쳐도 안전)
 */
 
-/* 페이지 본문 컨테이너 */
-.main {
-  max-width: 40rem; /* 너무 넓게 안 퍼지게 최대 너비 제한 (1rem ≈ 16px) */
-  margin: 4rem auto; /* 위아래 4rem, 좌우 auto = 가로 가운데 정렬 */
-  padding: 0 1.5rem; /* 좌우 안쪽 여백 (모바일에서 꽉 붙지 않게) */
-  font-family: ui-sans-serif, system-ui, sans-serif; /* 시스템 기본 산세리프 글꼴 */
-  line-height: 1.5; /* 줄 간격 */
-  color: #1a1a1a; /* 기본 글자색 (거의 검정) */
+.hero {
+  margin-bottom: 2rem;
 }
 
-/* 큰 제목 */
 .title {
-  margin: 0 0 0.75rem; /* 아래쪽만 간격 */
-  font-size: 1.75rem; /* 글자 크기 */
-  font-weight: 650; /* 굵기 (400 보통, 700 굵음) */
+  margin: 0 0 0.6rem;
+  font-size: clamp(1.6rem, 3vw, 2rem);
+  letter-spacing: -0.03em;
+  line-height: 1.25;
 }
 
-/* 서비스 설명 문장 */
 .lead {
-  margin: 0 0 1rem;
-  color: #333; /* 제목보다 살짝 연한 회색 */
+  margin: 0;
+  max-width: 40rem;
 }
 
-/* 부가 안내 문장 */
-.note {
+.section {
+  background: var(--bg-elevated);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.1rem 1.2rem 0.4rem;
+}
+
+.sectionHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.sectionHead h2 {
   margin: 0;
-  font-size: 0.9rem; /* 본문보다 조금 작게 */
-  color: #666; /* 더 연한 회색 = 덜 중요한 정보 */
+  font-size: 1rem;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 0.15rem;
+  border-top: 1px solid var(--line);
+}
+
+.row:hover .rowTitle {
+  color: var(--accent);
+}
+
+.rowTitle {
+  font-weight: 600;
+}
+
+.rowMeta {
+  margin-top: 0.2rem;
+  font-size: 0.85rem;
+}
+
+.error {
+  color: var(--danger);
+  margin: 0 0 0.75rem;
 }

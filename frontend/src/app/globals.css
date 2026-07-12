@@ -1,25 +1,161 @@
-/* 사이트 전체에 적용되는 전역 스타일 (layout.tsx 에서 import) */
+/*
+  globals.css — 사이트 전체 공통 스타일
 
-/* :root = HTML 문서의 최상위. 여기 적은 값은 전역 기본처럼 쓰임 */
+  :root 안의 --이름 = CSS 변수.
+  다른 CSS 에서 var(--accent) 처럼 불러 쓴다.
+  색을 한곳에서 바꾸면 버튼/배지 등이 같이 바뀐다.
+*/
+
 :root {
-  /* 브라우저 UI(스크롤바 등)를 라이트 테마로 맞춤 */
   color-scheme: light;
+  --bg: #f3f1ec;
+  --bg-elevated: #fffcf7;
+  --ink: #1c1917;
+  --ink-muted: #57534e;
+  --line: #ddd6cc;
+  --accent: #0f766e;
+  --accent-soft: #ccfbf1;
+  --danger: #b91c1c;
+  --danger-soft: #fee2e2;
+  --warn: #a16207;
+  --warn-soft: #fef3c7;
+  --ok: #166534;
+  --ok-soft: #dcfce7;
+  --shadow: 0 1px 2px rgba(28, 25, 23, 0.06);
+  --font: "IBM Plex Sans KR", "Pretendard", "Noto Sans KR", ui-sans-serif,
+    system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, monospace;
+  --radius: 12px;
 }
 
-/* * = 모든 요소에 적용 */
 * {
-  /*
-    box-sizing: border-box
-    = width/height 계산에 padding, border 를 포함
-    (안 쓰면 padding 넣을수록 박스가 커져서 레이아웃이 깨지기 쉬움)
-  */
   box-sizing: border-box;
 }
 
-/* html 과 body 를 같은 규칙으로 */
 html,
 body {
-  margin: 0; /* 바깥 여백 제거 (브라우저 기본 margin 없애기) */
-  padding: 0; /* 안쪽 여백 제거 */
-  background: #f7f7f5; /* 페이지 배경색 */
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  background:
+    radial-gradient(1200px 500px at 10% -10%, #d8efe9 0%, transparent 55%),
+    radial-gradient(900px 400px at 100% 0%, #f0e7d8 0%, transparent 50%),
+    var(--bg);
+  color: var(--ink);
+  font-family: var(--font);
+  line-height: 1.5;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+/* 화면 공통 폭 제한 */
+.shell {
+  width: min(960px, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 1.5rem 0 3rem;
+}
+
+.site-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 0 1.25rem;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 1.75rem;
+}
+
+.brand {
+  font-size: 1.05rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+
+.header-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 0.55rem 1rem;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #0d9488;
+}
+
+.btn-secondary {
+  background: var(--bg-elevated);
+  border-color: var(--line);
+  color: var(--ink);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  border-color: #c4bbb0;
+}
+
+.btn-danger {
+  background: var(--danger-soft);
+  color: var(--danger);
+  border-color: #fecaca;
+}
+
+.muted {
+  color: var(--ink-muted);
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.15rem 0.55rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.status-pending {
+  background: #e7e5e4;
+  color: #44403c;
+}
+
+.status-processing {
+  background: var(--warn-soft);
+  color: var(--warn);
+}
+
+.status-done {
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+
+.status-failed {
+  background: var(--danger-soft);
+  color: var(--danger);
 }

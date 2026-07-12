@@ -1,0 +1,67 @@
+/*
+  new.module.css — /meetings/new (새 회의 입력) 전용 스타일
+*/
+
+.title {
+  margin: 0 0 0.4rem;
+  font-size: 1.6rem;
+  letter-spacing: -0.02em;
+}
+
+.lead {
+  margin: 0 0 1.4rem;
+}
+
+.form {
+  background: var(--bg-elevated);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.2rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.field {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.field span {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.field input,
+.field textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.7rem 0.8rem;
+  background: #fff;
+  color: var(--ink);
+}
+
+.field textarea {
+  resize: vertical;
+  min-height: 16rem;
+  line-height: 1.55;
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.error {
+  margin: 0;
+  color: var(--danger);
+}

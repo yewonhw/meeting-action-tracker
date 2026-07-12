@@ -13,11 +13,11 @@
 - Meeting / ActionItem CRUD API
 - OpenRouter 회의록 구조화 (`POST /api/meetings/{id}/structure`) + JSON 검증
 - AI 비동기 처리 (202 Accepted → 백그라운드 실행, `ai_status` 폴링, 타임아웃 실패)
+- Frontend: 회의 목록 / 생성 / 상세(폴링·검토·액션 완료 토글)
 - 환경변수 예시 (`.env.example`)
 
 ### 아직 안 된 것
 
-- 실제 화면 플로우
 - AWS 배포
 
 ## 아키텍처 (예정)

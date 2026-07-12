@@ -1,39 +1,32 @@
 /**
- * Root Layout = 모든 페이지의 공통 뼈대.
+ * layout.tsx — 모든 페이지에 공통으로 씌우는 뼈대
  *
- * App Router 규칙:
- * - src/app/layout.tsx 는 필수에 가까운 공통 레이아웃
- * - 여기의 <html>, <body> 가 사이트 전체에 적용됨
- * - 각 page.tsx 내용은 {children} 자리에 들어감
+ * Next.js App Router 규칙:
+ * - src/app/layout.tsx 는 사이트 전체의 html/body 를 담당
+ * - 각 페이지(page.tsx) 내용은 아래 {children} 자리에 들어간다
  *
- * 예:
- *   layout 이 html/body 를 그리고
- *   page.tsx(Home) 가 body 안에 들어간다
+ * 그래서 헤더(로고, 새 회의 버튼)를 여기 두면
+ * 목록/생성/상세 어디서든 같은 상단이 보인다.
  */
 
-// Metadata = 브라우저 탭 제목, 검색/공유용 설명 등
-// type import = 타입만 가져오고 실행 코드에는 안 넣음
 import type { Metadata } from "next";
-
-// 전역 CSS: 모든 페이지에 공통으로 적용되는 스타일
+// Link = <a> 대신 쓰는 Next.js 이동 컴포넌트 (페이지 전체 새로고침을 줄임)
+import Link from "next/link";
+// 전역 CSS (버튼, 색 변수 등)
 import "./globals.css";
 
 /**
- * export const metadata
- * - Next.js가 이 값을 읽어서 <title>, <meta> 등을 만들어 줌
- * - 클라이언트에서 직접 쓰는 변수가 아니라 프레임워크용 설정
+ * metadata = 브라우저 탭 제목, 검색용 설명.
+ * 이 객체는 화면에 직접 안 그려지고, Next.js 가 <head> 에 넣어 준다.
  */
 export const metadata: Metadata = {
-  title: "Meeting Action Tracker", // 브라우저 탭에 보이는 제목
-  description: "회의록 액션아이템 관리 서비스", // 페이지 설명
+  title: "Meeting Action Tracker",
+  description: "회의록 액션아이템 관리 서비스",
 };
 
 /**
- * RootLayout 컴포넌트
- *
- * @param children - 하위 페이지(예: page.tsx)가 여기에 렌더링됨
- * Readonly<...> - props 객체를 읽기 전용으로 취급하겠다는 타입 표시
- * React.ReactNode - 화면에 그릴 수 있는 것(문자, 태그, 컴포넌트 등)
+ * RootLayout
+ * @param children - 지금 열려 있는 페이지의 UI
  */
 export default function RootLayout({
   children,
@@ -41,10 +34,28 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    // lang="ko" = 이 문서의 주 언어가 한국어임을 브라우저/접근성 도구에 알림
+    // lang="ko" = 문서 언어가 한국어
     <html lang="ko">
-      {/* body 안에 실제 페이지 내용이 들어간다 */}
-      <body>{children}</body>
+      <body>
+        {/* shell = 가운데 정렬된 컨텐츠 폭 (globals.css) */}
+        <div className="shell">
+          <header className="site-header">
+            {/* 클릭하면 홈(/)으로 */}
+            <Link href="/" className="brand">
+              Meeting Action Tracker
+            </Link>
+            <div className="header-actions">
+              {/* 클릭하면 새 회의 입력 화면으로 */}
+              <Link href="/meetings/new" className="btn btn-primary">
+                새 회의
+              </Link>
+            </div>
+          </header>
+
+          {/* 여기 아래에 page.tsx 내용이 렌더링됨 */}
+          {children}
+        </div>
+      </body>
     </html>
   );
 }
