@@ -17,7 +17,9 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.action_items import router as action_items_router
 from app.api.health import router as health_router
+from app.api.meetings import router as meetings_router
 from app.db.session import init_db
 
 
@@ -52,6 +54,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# health 라우터의 경로 앞에 /api를 붙인다.
+# 각 라우터의 경로 앞에 /api를 붙인다.
 # health.py의 @router.get("/health") → 최종 URL: GET /api/health
 app.include_router(health_router, prefix="/api")
+app.include_router(meetings_router, prefix="/api")
+app.include_router(action_items_router, prefix="/api")

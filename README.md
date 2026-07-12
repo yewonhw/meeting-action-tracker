@@ -9,11 +9,12 @@
 - Backend `GET /api/health` 헬스체크
 - SQLite 사용 (별도 DB 서버/Docker 불필요)
 - 관계형 데이터 모델: Meeting 1:N ActionItem
+- Meeting / ActionItem CRUD API
 - 환경변수 예시 (`.env.example`)
 
 ### 아직 안 된 것
 - AI 구조화 (OpenRouter)
-- CRUD / 비동기 AI 처리
+- 비동기 AI 처리 (loading / fail / timeout)
 - 실제 화면 플로우
 - AWS 배포
 
@@ -87,17 +88,6 @@ npm run dev
 ```
 
 앱: http://localhost:3000
-
-## 앞으로의 커밋 계획
-
-1. ~~DB 모델 (Meeting 1:N ActionItem, SQLite)~~
-2. Meeting / ActionItem CRUD API
-3. OpenRouter 구조화 + JSON 강제·검증
-4. AI 비동기 상태 처리 (loading / fail / timeout)
-5. Next.js 입력·검토·수정 UI
-6. 액션아이템 목록
-7. AWS 배포
-8. (여유) 필터·대시보드·로그인
 
 ## AI(바이브코딩) 사용
 
