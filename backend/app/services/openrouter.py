@@ -10,6 +10,7 @@ OpenRouter Chat Completions 클라이언트.
 from __future__ import annotations
 
 import json
+from datetime import date
 from typing import Any
 
 import httpx
@@ -19,21 +20,34 @@ from app.config import OPENROUTER_API_KEY, OPENROUTER_MODEL, OPENROUTER_TIMEOUT_
 # OpenRouter Chat Completions API의 고정 URL
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 
-# 모델에게 주는 시스템 지시문.
-# 원문에 있는 내용만 뽑고, 없는 정보는 만들지 말라고 명시한다.
-# 출력은 지정한 JSON 객체만 하도록 한다.
-SYSTEM_PROMPT = """당신은 회의록 구조화 도우미입니다.
-주어진 회의록 원문에 실제로 적힌 내용만 추출하세요.
-없는 담당자·기한·결정·논의를 지어내지 마세요. 없으면 null 또는 빈 배열을 쓰세요.
 
-반드시 아래 JSON 객체만 출력하세요. 설명 문장이나 코드펜스는 넣지 마세요.
-{
+def build_system_prompt(*, today: date | None = None) -> str:
+    """
+    모델에게 주는 시스템 지시문.
+
+    today 를 넣는 이유:
+    - 원문에 "금요일", "다음 주" 만 있으면 날짜를 찍지 말고 null 을 쓰게 하기 위함
+    - 원문에 "7월 15일" 처럼 구체 날짜가 있을 때만 YYYY-MM-DD 로 변환
+    """
+    today_str = (today or date.today()).isoformat()
+    return f"""당신은 회의록 구조화 도우미입니다.
+오늘 날짜는 {today_str} 입니다.
+
+규칙:
+1. 주어진 회의록 원문에 실제로 적힌 내용만 추출하세요.
+2. 원문에 없는 담당자·기한·결정·논의를 지어내지 마세요. 없으면 null 또는 빈 배열을 쓰세요.
+3. assignee 는 원문에 나온 이름(또는 호칭) 그대로만 쓰세요. 추측 금지.
+4. due_date 는 원문에 구체 날짜(예: 7월 15일, 2026-07-15)가 있을 때만 YYYY-MM-DD 로 쓰세요.
+   "금요일", "다음 주", "이번 스프린트 안"처럼 날짜가 확정되지 않으면 null 입니다.
+5. 반드시 아래 JSON 객체만 출력하세요. 설명 문장이나 코드펜스는 넣지 마세요.
+
+{{
   "decisions": ["결정사항 문자열"],
   "discussions": ["논의사항 문자열"],
   "action_items": [
-    {"task": "할 일", "assignee": "담당자 또는 null", "due_date": "YYYY-MM-DD 또는 null"}
+    {{"task": "할 일", "assignee": "담당자 또는 null", "due_date": "YYYY-MM-DD 또는 null"}}
   ]
-}
+}}
 """
 
 
@@ -104,7 +118,7 @@ async def complete_meeting_structure(raw_text: str, *, title: str | None = None)
         "model": OPENROUTER_MODEL,
         "temperature": 0.2,
         "messages": [
-            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "system", "content": build_system_prompt(today=date.today())},
             {"role": "user", "content": user_content},
         ],
         # 가능하면 JSON만 오도록 유도. 미지원 모델은 서버가 무시할 수 있음.

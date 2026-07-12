@@ -16,9 +16,9 @@ from pydantic import BaseModel, Field, field_validator
 class AiActionItem(BaseModel):
     # 할 일 본문. 비어 있으면 안 되고, 최대 500자까지 허용한다.
     task: str = Field(..., min_length=1, max_length=500)
-    # 담당자. 원문에 없으면 null이다 한다.
+    # 담당자. 원문에 없으면 null. 저장 전 hallucination.py 가 한 번 더 걸러 낸다.
     assignee: Optional[str] = Field(None, max_length=100)
-    # 기한. YYYY-MM-DD 형식의 date이거나 null이다 한다.
+    # 기한. YYYY-MM-DD 이거나 null. 원문 근거 없으면 저장 전 null 로 바꿈.
     due_date: Optional[date] = None
 
     @field_validator("assignee", mode="before")

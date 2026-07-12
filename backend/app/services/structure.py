@@ -22,6 +22,7 @@ from sqlalchemy.orm import Session, selectinload
 from app.db.models import ActionItem, Meeting
 from app.db.session import SessionLocal
 from app.schemas.ai import AiStructureResult
+from app.services.hallucination import sanitize_structure_result
 from app.services.openrouter import OpenRouterError, complete_meeting_structure
 
 # 이 파일에서 나는 로그를 찍을 때 쓰는 이름표
@@ -72,11 +73,17 @@ async def _structure_meeting_in_session(db: Session, meeting: Meeting) -> None:
         except json.JSONDecodeError as exc:
             raise StructureError(f"Model returned invalid JSON: {exc}") from exc
 
-        # 3) 스키마 검사
+        # 3) 스키마 검사 (형식)
+        #    예: due_date 가 날짜 형식인가, task 가 비어 있지 않은가
         try:
             result = AiStructureResult.model_validate(parsed)
         except ValidationError as exc:
             raise StructureError(f"JSON failed schema validation: {exc}") from exc
+
+        # 3-b) 원문 근거 검사 (hallucination.py)
+        #    형식은 맞아도, 원문에 없는 담당자/기한이면 null 로 내린다.
+        #    예: 원문에 "홍길동"이 없는데 assignee="홍길동" → None
+        result = sanitize_structure_result(meeting.raw_text, result)
 
         # 4) 결정/논의 저장 (리스트를 JSON 문자열로)
         meeting.decisions = json.dumps(result.decisions, ensure_ascii=False)
