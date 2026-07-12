@@ -143,7 +143,7 @@ export async function startStructure(id: number): Promise<Meeting> {
   });
 }
 
-/** 액션 1개 수정. 예: status 를 done 으로 */
+/** 액션 1개 수정. 예: status / task / assignee / due_date */
 export async function updateActionItem(
   id: number,
   payload: ActionItemUpdatePayload,
@@ -152,6 +152,11 @@ export async function updateActionItem(
     method: "PATCH",
     body: JSON.stringify(payload),
   });
+}
+
+/** 액션 1개 삭제. 성공하면 본문 없음 */
+export async function deleteActionItem(id: number): Promise<void> {
+  await requestJson<null>(`/api/action-items/${id}`, { method: "DELETE" });
 }
 
 /**

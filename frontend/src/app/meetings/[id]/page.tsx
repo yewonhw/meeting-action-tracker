@@ -7,8 +7,8 @@
  * 1. URL 에서 회의 id 읽기
  * 2. GET 으로 회의 불러오기
  * 3. ai_status === "processing" 이면 1.5초마다 다시 GET (폴링)
- * 4. 원문 / 결정·논의 편집 / 액션 완료 체크 표시
- * 5. 버튼: AI 시작·재시도, 수정 저장, 삭제
+ * 4. 원문 / 결정·논의 편집 / 액션 검토·수정·삭제
+ * 5. 버튼: AI 시작·재시도, 회의 삭제
  */
 
 "use client";
@@ -17,6 +17,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  deleteActionItem,
   deleteMeeting,
   getMeeting,
   parseJsonStringList,
@@ -24,11 +25,21 @@ import {
   updateActionItem,
   updateMeeting,
 } from "@/lib/api";
-import type { Meeting } from "@/lib/types";
+import type { ActionItem, Meeting } from "@/lib/types";
 import styles from "./detail.module.css";
 
 /** 폴링 간격 (밀리초). 1500 = 1.5초 */
 const POLL_MS = 1500;
+
+/**
+ * 액션 1개를 화면에서 고치기 위한 임시 입력값.
+ * 서버 값과 따로 두었다가 "액션 저장" 을 누를 때 PATCH 로 보낸다.
+ */
+type ActionDraft = {
+  task: string;
+  assignee: string;
+  due_date: string;
+};
 
 function statusClass(status: string): string {
   switch (status) {
@@ -56,6 +67,16 @@ function statusLabel(status: string): string {
   }
 }
 
+/** 서버 ActionItem → 입력칸용 draft */
+function toDraft(item: ActionItem): ActionDraft {
+  return {
+    task: item.task,
+    // null 이면 빈 칸으로 보여 줌
+    assignee: item.assignee ?? "",
+    due_date: item.due_date ?? "",
+  };
+}
+
 export default function MeetingDetailPage() {
   // useParams = URL 동적 구간 읽기. id 는 문자열로 옴
   const params = useParams<{ id: string }>();
@@ -78,15 +99,34 @@ export default function MeetingDetailPage() {
   const [discussionsText, setDiscussionsText] = useState("");
 
   /**
+   * 액션별 입력 임시값.
+   * key = action_item.id
+   * 서버에서 목록을 다시 받으면 이 객체도 같이 맞춰 준다.
+   */
+  const [actionDrafts, setActionDrafts] = useState<Record<number, ActionDraft>>(
+    {},
+  );
+
+  /** 서버 회의 데이터로 화면 state 를 맞춘다 */
+  function applyMeeting(data: Meeting) {
+    setMeeting(data);
+    setDecisionsText(parseJsonStringList(data.decisions).join("\n"));
+    setDiscussionsText(parseJsonStringList(data.discussions).join("\n"));
+    // 액션 draft 를 서버 값으로 다시 채움
+    const next: Record<number, ActionDraft> = {};
+    for (const item of data.action_items) {
+      next[item.id] = toDraft(item);
+    }
+    setActionDrafts(next);
+  }
+
+  /**
    * useCallback = 함수를 기억해 두고, meetingId 가 바뀔 때만 새로 만듦
    * (폴링 useEffect 의존성에 넣기 좋게)
    */
   const refresh = useCallback(async () => {
     const data = await getMeeting(meetingId);
-    setMeeting(data);
-    // JSON 배열 → "줄1\n줄2" 형태로 변환
-    setDecisionsText(parseJsonStringList(data.decisions).join("\n"));
-    setDiscussionsText(parseJsonStringList(data.discussions).join("\n"));
+    applyMeeting(data);
     return data;
   }, [meetingId]);
 
@@ -103,9 +143,7 @@ export default function MeetingDetailPage() {
       try {
         const data = await getMeeting(meetingId);
         if (!cancelled) {
-          setMeeting(data);
-          setDecisionsText(parseJsonStringList(data.decisions).join("\n"));
-          setDiscussionsText(parseJsonStringList(data.discussions).join("\n"));
+          applyMeeting(data);
           setError(null);
         }
       } catch (err) {
@@ -147,6 +185,21 @@ export default function MeetingDetailPage() {
     [meeting?.action_items],
   );
 
+  /** draft 한 칸만 바꾸기 */
+  function patchDraft(
+    id: number,
+    field: keyof ActionDraft,
+    value: string,
+  ) {
+    setActionDrafts((prev) => ({
+      ...prev,
+      [id]: {
+        ...(prev[id] ?? { task: "", assignee: "", due_date: "" }),
+        [field]: value,
+      },
+    }));
+  }
+
   /** AI 구조화 시작/재시도 버튼 */
   async function onStartStructure() {
     setBusy(true);
@@ -154,7 +207,7 @@ export default function MeetingDetailPage() {
     try {
       const updated = await startStructure(meetingId);
       // 보통 ai_status=processing → 위 폴링 effect 가 자동으로 돌아감
-      setMeeting(updated);
+      applyMeeting(updated);
     } catch (err) {
       setError(err instanceof Error ? err.message : "구조화 시작 실패");
     } finally {
@@ -182,9 +235,7 @@ export default function MeetingDetailPage() {
         decisions: JSON.stringify(decisions),
         discussions: JSON.stringify(discussions),
       });
-      setMeeting(updated);
-      setDecisionsText(parseJsonStringList(updated.decisions).join("\n"));
-      setDiscussionsText(parseJsonStringList(updated.discussions).join("\n"));
+      applyMeeting(updated);
     } catch (err) {
       setError(err instanceof Error ? err.message : "저장 실패");
     } finally {
@@ -199,7 +250,55 @@ export default function MeetingDetailPage() {
       await updateActionItem(id, { status: next });
       await refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "액션 수정 실패");
+      setError(err instanceof Error ? err.message : "액션 상태 수정 실패");
+    }
+  }
+
+  /**
+   * 액션 1개의 할 일·담당자·기한을 서버에 저장.
+   * 빈 담당자/기한은 null 로 보내서 "없음"으로 저장한다.
+   */
+  async function onSaveAction(id: number) {
+    const draft = actionDrafts[id];
+    if (!draft) return;
+
+    const task = draft.task.trim();
+    if (!task) {
+      setError("할 일 내용은 비울 수 없습니다.");
+      return;
+    }
+
+    setBusy(true);
+    setError(null);
+    try {
+      await updateActionItem(id, {
+        task,
+        assignee: draft.assignee.trim() || null,
+        // type="date" 값이 비어 있으면 null
+        due_date: draft.due_date.trim() || null,
+      });
+      await refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "액션 저장 실패");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  /** 액션 1개만 삭제 (회의는 유지) */
+  async function onDeleteAction(id: number) {
+    if (!window.confirm("이 액션아이템을 삭제할까요?")) {
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      await deleteActionItem(id);
+      await refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "액션 삭제 실패");
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -238,8 +337,9 @@ export default function MeetingDetailPage() {
     );
   }
 
-  // processing 중이거나 다른 작업 중이면 AI 버튼 비활성
+  // processing 중이거나 다른 작업 중이면 편집 버튼 비활성
   const canStartAi = meeting.ai_status !== "processing" && !busy;
+  const editingLocked = busy || meeting.ai_status === "processing";
 
   return (
     <main className={styles.wrap}>
@@ -276,7 +376,7 @@ export default function MeetingDetailPage() {
             type="button"
             className="btn btn-danger"
             onClick={() => void onDelete()}
-            disabled={busy || meeting.ai_status === "processing"}
+            disabled={editingLocked}
           >
             삭제
           </button>
@@ -311,7 +411,7 @@ export default function MeetingDetailPage() {
             type="button"
             className="btn btn-secondary"
             onClick={() => void onSaveReview()}
-            disabled={busy || meeting.ai_status === "processing"}
+            disabled={editingLocked}
           >
             수정 저장
           </button>
@@ -324,6 +424,7 @@ export default function MeetingDetailPage() {
               value={decisionsText}
               onChange={(e) => setDecisionsText(e.target.value)}
               rows={6}
+              disabled={editingLocked}
             />
           </label>
           <label className={styles.field}>
@@ -332,36 +433,93 @@ export default function MeetingDetailPage() {
               value={discussionsText}
               onChange={(e) => setDiscussionsText(e.target.value)}
               rows={6}
+              disabled={editingLocked}
             />
           </label>
         </div>
       </section>
 
       <section className={styles.panel}>
-        <h2>액션아이템</h2>
+        <h2>액션아이템 (검토·수정)</h2>
+        <p className={`muted ${styles.hint}`}>
+          AI 결과를 그대로 두지 말고, 할 일·담당자·기한을 확인한 뒤 저장하세요.
+        </p>
         {actionItems.length === 0 ? (
           <p className="muted">아직 액션이 없습니다. AI 구조화를 실행해 보세요.</p>
         ) : (
           <ul className={styles.actions}>
-            {actionItems.map((item) => (
-              <li key={item.id} className={styles.actionRow}>
-                <label className={styles.actionCheck}>
-                  <input
-                    type="checkbox"
-                    checked={item.status === "done"}
-                    onChange={() => void onToggleAction(item.id, item.status)}
-                  />
-                  <span className={item.status === "done" ? styles.doneText : undefined}>
-                    {item.task}
-                  </span>
-                </label>
-                <div className={`muted ${styles.actionMeta}`}>
-                  {item.assignee ?? "담당자 없음"}
-                  {" · "}
-                  {item.due_date ?? "기한 없음"}
-                </div>
-              </li>
-            ))}
+            {actionItems.map((item) => {
+              // draft 가 아직 없으면 서버 값으로 채운 기본값 사용
+              const draft = actionDrafts[item.id] ?? toDraft(item);
+              return (
+                <li key={item.id} className={styles.actionRow}>
+                  <div className={styles.actionTop}>
+                    <label className={styles.actionCheck}>
+                      <input
+                        type="checkbox"
+                        checked={item.status === "done"}
+                        onChange={() => void onToggleAction(item.id, item.status)}
+                        disabled={editingLocked}
+                      />
+                      <span className="muted">완료</span>
+                    </label>
+                    <div className={styles.actionButtons}>
+                      <button
+                        type="button"
+                        className="btn btn-secondary"
+                        onClick={() => void onSaveAction(item.id)}
+                        disabled={editingLocked}
+                      >
+                        액션 저장
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-danger"
+                        onClick={() => void onDeleteAction(item.id)}
+                        disabled={editingLocked}
+                      >
+                        삭제
+                      </button>
+                    </div>
+                  </div>
+
+                  <label className={styles.field}>
+                    <span>할 일</span>
+                    <input
+                      value={draft.task}
+                      onChange={(e) => patchDraft(item.id, "task", e.target.value)}
+                      disabled={editingLocked}
+                      className={item.status === "done" ? styles.doneText : undefined}
+                    />
+                  </label>
+
+                  <div className={styles.actionFields}>
+                    <label className={styles.field}>
+                      <span>담당자</span>
+                      <input
+                        value={draft.assignee}
+                        onChange={(e) =>
+                          patchDraft(item.id, "assignee", e.target.value)
+                        }
+                        placeholder="없으면 비워 두세요"
+                        disabled={editingLocked}
+                      />
+                    </label>
+                    <label className={styles.field}>
+                      <span>기한</span>
+                      <input
+                        type="date"
+                        value={draft.due_date}
+                        onChange={(e) =>
+                          patchDraft(item.id, "due_date", e.target.value)
+                        }
+                        disabled={editingLocked}
+                      />
+                    </label>
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         )}
       </section>

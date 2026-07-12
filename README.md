@@ -15,7 +15,7 @@
 
 - Frontend(Next.js) / Backend(FastAPI) monorepo, REST로 분리
 - 관계형 모델: Meeting 1:N ActionItem (SQLite)
-- Meeting / ActionItem CRUD + AI 결과 검토·수정(결정/논의 편집, 액션 완료 토글)
+- Meeting / ActionItem CRUD + AI 결과 검토·수정(결정/논의·액션 할일/담당자/기한 편집·삭제)
 - OpenRouter 무료 모델로 회의록 구조화 + JSON 스키마 검증
 - 환각 방지: 프롬프트 제약 + 저장 전 원문 근거 검사(담당자·기한)
 - AI 비동기 처리: `202 Accepted` → 백그라운드 실행, `ai_status` 폴링, 타임아웃/`failed`
@@ -24,7 +24,7 @@
 ### 일부러 미룬 것 / 약한 부분
 
 - **전역 액션 보드**: 액션은 회의 상세 안에서 목록·완료 처리. 회의를 가로지르는 통합 할 일 화면은 없음
-- **액션 문구/담당자 UI 편집**: API `PATCH`는 있으나, 화면에서는 완료 토글 중심. 결정·논의 수정에 우선순위를 둠
+- **액션 수동 추가 UI**: 액션 생성은 AI 구조화(또는 API) 중심. 화면에서는 기존 액션 수정·삭제·완료 토글
 - **결정/논의 문장 단위 원문 검증**: 담당자·기한만 자동 null 처리. 문장 hallucination은 사용자가 상세 화면에서 고치도록 함
 - **RDS/HTTPS/도메인**: MVP는 EC2 단일 인스턴스 + SQLite + HTTP(IP). 운영 hardening은 범위 밖
 
