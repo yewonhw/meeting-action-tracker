@@ -88,3 +88,36 @@ export type ActionItemUpdatePayload = {
   due_date?: string | null;
   status?: ActionStatus;
 };
+
+/** GET /api/action-items 목록 한 줄 (회의 제목 포함) */
+export type ActionItemListItem = {
+  id: number;
+  meeting_id: number;
+  /** 서버가 Meeting 과 join 해서 채워 줌. 보드에서 소속 회의 표시용 */
+  meeting_title: string;
+  task: string;
+  assignee: string | null;
+  due_date: string | null;
+  status: ActionStatus | string;
+  created_at: string;
+  updated_at: string;
+};
+
+/** 백엔드 ActionSortBy 와 동일. 임의 문자열로 정렬 컬럼을 열지 않기 위함 */
+export type ActionSortBy = "due_date" | "assignee" | "status" | "created_at";
+export type SortDir = "asc" | "desc";
+
+/**
+ * listActionItems() 에 넘기는 쿼리.
+ * 필드가 곧 ?assignee=&status=&due_to=... 가 된다.
+ * 프론트에서 받은 뒤 다시 filter 하지 말고, 필요하면 여기 값을 바꿔 재요청한다.
+ *
+ * due_to: 이 날짜까지(이하). 보통 오늘을 넣어 "오늘까지·지난 기한"을 본다.
+ */
+export type ActionItemListParams = {
+  assignee?: string;
+  status?: ActionStatus;
+  due_to?: string;
+  sort_by?: ActionSortBy;
+  sort_dir?: SortDir;
+};

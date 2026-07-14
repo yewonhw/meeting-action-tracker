@@ -45,7 +45,13 @@ export default function RootLayout({
               Meeting Action Tracker
             </Link>
             <div className="header-actions">
-              {/* 클릭하면 새 회의 입력 화면으로 */}
+              {/*
+                액션 보드: 회의를 가로지르는 목록 + 서버사이드 필터·정렬.
+                회의 목록(홈)과 분리해 "회의" vs "할 일" 진입점을 나눔.
+              */}
+              <Link href="/actions" className="btn btn-secondary">
+                액션 보드
+              </Link>
               <Link href="/meetings/new" className="btn btn-primary">
                 새 회의
               </Link>

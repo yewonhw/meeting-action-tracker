@@ -77,6 +77,41 @@ class ActionItemRead(BaseModel):
         return serialize_utc_datetime(value)
 
 
+class ActionItemListItem(BaseModel):
+    """
+    전체 액션 목록 응답 (GET /action-items).
+
+    ActionItemRead 와 다른 점:
+    - meeting_title 추가 → 보드에서 "어느 회의 소속인지"를 바로 보여 주기 위함
+    - 회의 상세 안의 action_items[] 는 title 이 필요 없어서 Read 를 그대로 씀
+
+    왜 별도 스키마?
+    - 목록/상세 응답 모양이 다르면 스키마를 나누는 편이 API 문서·타입에 덜 헷갈림
+    """
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    meeting_id: int
+    # join 결과로 API 가 채워 줌 (DB 컬럼이 아님)
+    meeting_title: str
+    task: str
+    assignee: Optional[str]
+    due_date: Optional[date]
+    status: str
+    created_at: datetime
+    updated_at: datetime
+
+    @field_serializer("created_at", "updated_at")
+    def _ser_dt(self, value: datetime) -> str:
+        return serialize_utc_datetime(value)
+
+
+# 정렬 허용 값. 쿼리 문자열을 그대로 SQL 컬럼명에 꽂지 않기 위한 화이트리스트.
+ActionSortBy = Literal["due_date", "assignee", "status", "created_at"]
+SortDir = Literal["asc", "desc"]
+
+
 class MeetingCreate(BaseModel):
     # 회의 생성 시 클라이언트가 보내는 필드만 받는다.
     title: str = Field(..., min_length=1, max_length=200)

@@ -12,6 +12,8 @@
 
 import type {
   ActionItem,
+  ActionItemListItem,
+  ActionItemListParams,
   ActionItemUpdatePayload,
   Meeting,
   MeetingCreatePayload,
@@ -141,6 +143,30 @@ export async function startStructure(id: number): Promise<Meeting> {
   return requestJson(`/api/meetings/${id}/structure`, {
     method: "POST",
   });
+}
+
+/**
+ * 전체 액션 목록 (여러 회의 누적).
+ *
+ * 왜 query string 을 여기서 만드나?
+ * - 화면이 URLSearchParams 를 직접 조립해도 되지만,
+ *   API 경로·파라미터 이름을 api.ts 한곳에 모아 두면 백엔드 계약이 바뀌어도 수정이 쉬움
+ * - 빈 값은 아예 안 붙임 → 서버가 "필터 없음" 으로 처리
+ *
+ * 주의: 받은 배열을 이 함수 밖에서 filter/sort 하지 말 것.
+ *       정렬·필터는 이미 서버 SQL 결과다.
+ */
+export async function listActionItems(
+  params: ActionItemListParams = {},
+): Promise<ActionItemListItem[]> {
+  const query = new URLSearchParams();
+  if (params.assignee?.trim()) query.set("assignee", params.assignee.trim());
+  if (params.status) query.set("status", params.status);
+  if (params.due_to) query.set("due_to", params.due_to);
+  if (params.sort_by) query.set("sort_by", params.sort_by);
+  if (params.sort_dir) query.set("sort_dir", params.sort_dir);
+  const qs = query.toString();
+  return requestJson(`/api/action-items${qs ? `?${qs}` : ""}`);
 }
 
 /** 액션 1개 수정. 예: status / task / assignee / due_date */

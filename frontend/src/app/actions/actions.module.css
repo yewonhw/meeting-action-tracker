@@ -1,0 +1,121 @@
+/*
+  actions.module.css — /actions 보드 전용
+
+  필터 영역과 목록을 한 카드처럼 보이게 해서
+  "조건을 고르고 → 서버 결과를 본다" 흐름이 한 화면에 읽히게 함.
+*/
+
+.title {
+  margin: 0 0 0.5rem;
+  font-size: clamp(1.5rem, 3vw, 1.85rem);
+  letter-spacing: -0.03em;
+}
+
+.lead {
+  margin: 0 0 1.25rem;
+  max-width: 40rem;
+}
+
+.lead code {
+  font-size: 0.85em;
+}
+
+/* 필터 폼: 좁은 화면에서는 자동으로 줄바꿈 */
+.filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.75rem 0.9rem;
+  align-items: end;
+  background: var(--bg-elevated);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1rem 1.1rem;
+  margin-bottom: 1.25rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  color: var(--ink-muted);
+}
+
+.field input,
+.field select {
+  padding: 0.45rem 0.55rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ink);
+}
+
+.filterActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  grid-column: 1 / -1;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  background: var(--bg-elevated);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.row {
+  display: flex;
+  gap: 0.85rem;
+  align-items: flex-start;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.check {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: 0.75rem;
+  padding-top: 0.15rem;
+}
+
+.body {
+  min-width: 0;
+  flex: 1;
+}
+
+.task {
+  font-weight: 550;
+}
+
+.taskDone {
+  font-weight: 550;
+  text-decoration: line-through;
+  color: var(--ink-muted);
+}
+
+.meta {
+  margin-top: 0.25rem;
+  font-size: 0.85rem;
+}
+
+.meta a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.error {
+  color: var(--danger);
+  margin: 0 0 0.75rem;
+}
