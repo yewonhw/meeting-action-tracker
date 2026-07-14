@@ -9,16 +9,37 @@ AI 호출은 이후 커밋. ai_status / ai_error는 읽기 전용.
 
 from __future__ import annotations
 
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from typing import Literal, Optional
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_serializer
 
 
 # AI 구조화 상태. 이 네 값만 허용한다.
 AiStatus = Literal["pending", "processing", "done", "failed"]
 # 액션아이템 완료 상태.
 ActionStatus = Literal["todo", "done"]
+
+
+def serialize_utc_datetime(value: datetime) -> str:
+    """
+    DB 시각을 API JSON 문자열로 바꿀 때 쓴다.
+
+    SQLite 의 func.now() 는 보통 UTC 인데, 타임존 표시(Z) 없이 나올 수 있다.
+    예: "2026-07-12T04:56:54"
+
+    브라우저(JS)는 Z 없는 문자열을 "이미 로컬 시간"으로 읽어서
+    한국에서 보면 9시간 어긋난다.
+
+    그래서 naive(타임존 없음) 이면 UTC 로 간주하고 끝에 Z 를 붙인다.
+    예: "2026-07-12T04:56:54Z" → 화면에서 오후 1:56 (KST)
+    """
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=timezone.utc)
+    else:
+        value = value.astimezone(timezone.utc)
+    # +00:00 대신 Z 로 통일 (프론트가 헷갈리지 않게)
+    return value.isoformat().replace("+00:00", "Z")
 
 
 class ActionItemCreate(BaseModel):
@@ -50,6 +71,10 @@ class ActionItemRead(BaseModel):
     status: str
     created_at: datetime
     updated_at: datetime
+
+    @field_serializer("created_at", "updated_at")
+    def _ser_dt(self, value: datetime) -> str:
+        return serialize_utc_datetime(value)
 
 
 class MeetingCreate(BaseModel):
@@ -84,6 +109,10 @@ class MeetingRead(BaseModel):
     # 기본값은 빈 리스트. 액션이 없어도 항상 리스트로 응답한다.
     action_items: list[ActionItemRead] = []
 
+    @field_serializer("created_at", "updated_at")
+    def _ser_dt(self, value: datetime) -> str:
+        return serialize_utc_datetime(value)
+
 
 class MeetingListItem(BaseModel):
     """목록용 — 원문·액션아이템은 빼고 가볍게."""
@@ -95,3 +124,7 @@ class MeetingListItem(BaseModel):
     ai_status: str
     created_at: datetime
     updated_at: datetime
+
+    @field_serializer("created_at", "updated_at")
+    def _ser_dt(self, value: datetime) -> str:
+        return serialize_utc_datetime(value)

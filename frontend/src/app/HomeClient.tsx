@@ -15,6 +15,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { listMeetings } from "@/lib/api";
+import { formatDateTime } from "@/lib/datetime";
 import type { MeetingListItem } from "@/lib/types";
 // CSS Modules: 이 파일 전용 클래스. styles.title 처럼 씀
 import styles from "./page.module.css";
@@ -126,8 +127,7 @@ export default function HomeClient() {
                   <div>
                     <div className={styles.rowTitle}>{meeting.title}</div>
                     <div className={`muted ${styles.rowMeta}`}>
-                      #{meeting.id} ·{" "}
-                      {new Date(meeting.created_at).toLocaleString("ko-KR")}
+                      #{meeting.id} · {formatDateTime(meeting.created_at)}
                     </div>
                   </div>
                   <span className={statusClass(meeting.ai_status)}>

@@ -25,6 +25,7 @@ import {
   updateActionItem,
   updateMeeting,
 } from "@/lib/api";
+import { formatDateTime } from "@/lib/datetime";
 import type { ActionItem, Meeting } from "@/lib/types";
 import styles from "./detail.module.css";
 
@@ -354,7 +355,7 @@ export default function MeetingDetailPage() {
               {statusLabel(meeting.ai_status)}
             </span>
             <span className="muted">
-              #{meeting.id} · {new Date(meeting.created_at).toLocaleString("ko-KR")}
+              #{meeting.id} · {formatDateTime(meeting.created_at)}
             </span>
           </div>
         </div>
