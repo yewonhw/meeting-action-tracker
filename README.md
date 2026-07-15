@@ -19,15 +19,15 @@
 - OpenRouter 무료 모델로 회의록 구조화 + JSON 스키마 검증
 - 환각 방지: 프롬프트 제약 + 저장 전 원문 근거 검사(담당자·기한)
 - AI 비동기 처리: `202 Accepted` → 백그라운드 실행, `ai_status` 폴링, 타임아웃/`failed`
-- **서버사이드 필터·정렬**: `GET /api/action-items?assignee=&status=&due_to=&sort_by=&sort_dir=` + `/actions` 보드
+- 서버사이드 필터·정렬: `GET /api/action-items?assignee=&status=&due_to=&sort_by=&sort_dir=` + `/actions` 보드
 - AWS EC2 + nginx 배포 (`/` → Next.js, `/api` → FastAPI)
 
 ### 일부러 미룬 것 / 약한 부분
 
 - **로그인 / 사용자 권한**: 인증·사용자별 데이터 분리는 없음
 - **액션 수동 추가 UI**: 액션 생성은 AI 구조화(또는 API) 중심. 화면에서는 기존 액션 수정·삭제·완료 토글
-- **결정/논의 문장 단위 원문 검증**: 담당자·기한만 자동 null 처리. 문장 hallucination은 사용자가 상세 화면에서 고치도록 함
-- **RDS/HTTPS/도메인**: MVP는 EC2 단일 인스턴스 + SQLite + HTTP(IP). 운영 hardening은 범위 밖
+- **UX 다듬기**: 입력 검증 / 에러 / 로딩 / 반응형.
+- **회의록 파일 업로드**: 텍스트 파일 등 업로드 입력.
 
 ## 아키텍처
 
@@ -124,4 +124,3 @@ npm run dev
 ## AI(바이브코딩) 사용
 
 - Cursor로 scaffold, 기능 구현, 배포 스크립트 작성을 도움받음
-- 커밋은 작업 단위로 분리해 두었고, 제출 시 각 커밋의 의도를 설명할 수 있게 유지함
